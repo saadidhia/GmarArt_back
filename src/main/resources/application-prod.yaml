@@ -13,7 +13,7 @@ spring:
 
 app:
   jwt:
-    secret: ${JWT_SECRET}
+    secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
     expiration: ${JWT_EXPIRATION:86400000}
   admin:
     username: ${ADMIN_USERNAME}
@@ -25,4 +25,4 @@ aws:
     access-key: ${AWS_ACCESS_KEY_ID}
     secret-key: ${AWS_SECRET_ACCESS_KEY}
   s3:
-    bucket-name: ${AWS_S3_BUCKET:flashmenu}
+    bucket-name: flashmenu
