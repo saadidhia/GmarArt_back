@@ -8,10 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,8 +18,9 @@ import java.util.UUID;
 public class PaintingService {
 
     private final PaintingRepository paintingRepository;
-    private static final String UPLOAD_DIR = "uploads/paintings/";
-    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    private final S3Service s3Service;
+    private static final long MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+    private static final int MAX_IMAGES = 7;
 
     /**
      * Get all paintings
@@ -46,21 +44,32 @@ public class PaintingService {
     }
 
     /**
-     * Create new painting
+     * Create new painting and upload its images into an S3 folder named after
+     * the painting's generated id and name.
      */
     @Transactional
-    public Painting createPainting(Painting painting) {
+    public Painting createPainting(Painting painting, MultipartFile[] images) {
         if (paintingRepository.existsByName(painting.getName())) {
             throw new RuntimeException("Painting with name '" + painting.getName() + "' already exists");
         }
-        return paintingRepository.save(painting);
+
+        // Save first so the id is generated before we build the S3 folder name.
+        Painting saved = paintingRepository.save(painting);
+
+        if (images != null && images.length > 0) {
+            saved.setAllImageUrls(uploadImages(saved, images));
+            saved = paintingRepository.save(saved);
+        }
+
+        return saved;
     }
 
     /**
-     * Update painting
+     * Update painting. If new images are provided, the painting's existing
+     * images are removed from S3 and replaced with the new ones.
      */
     @Transactional
-    public Painting updatePainting(UUID id, Painting updatedPainting) {
+    public Painting updatePainting(UUID id, Painting updatedPainting, MultipartFile[] images) {
         Painting painting = paintingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Painting not found with id: " + id));
 
@@ -72,73 +81,66 @@ public class PaintingService {
         painting.setName(updatedPainting.getName());
         painting.setTechnique(updatedPainting.getTechnique());
         painting.setYear(updatedPainting.getYear());
-        painting.setPrintSize(updatedPainting.getPrintSize());
-        painting.setPrintPrice(updatedPainting.getPrintPrice());
-        painting.setOriginalAvailable(updatedPainting.isOriginalAvailable());
-        painting.setOriginalPrice(updatedPainting.getOriginalPrice());
+        painting.setStyle(updatedPainting.getStyle());
+        painting.setArtist(updatedPainting.getArtist());
+        painting.setWidth(updatedPainting.getWidth());
+        painting.setHeight(updatedPainting.getHeight());
+        painting.setDepth(updatedPainting.getDepth());
+        painting.setPrice(updatedPainting.getPrice());
+        painting.setDescription(updatedPainting.getDescription());
+
+        if (images != null && images.length > 0) {
+            painting.getAllImageUrls().forEach(s3Service::deleteByUrl);
+            painting.setAllImageUrls(uploadImages(painting, images));
+        }
 
         return paintingRepository.save(painting);
     }
 
     /**
-     * Delete painting
+     * Delete painting and its images from S3
      */
     @Transactional
     public void deletePainting(UUID id) {
-        if (!paintingRepository.existsById(id)) {
-            throw new RuntimeException("Painting not found with id: " + id);
-        }
+        Painting painting = paintingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Painting not found with id: " + id));
+        painting.getAllImageUrls().forEach(s3Service::deleteByUrl);
         paintingRepository.deleteById(id);
     }
 
     /**
-     * Save painting image and return URL
+     * Validate and upload each image to the painting's S3 folder, returning the resulting URLs.
      */
-    public String savePaintingImage(MultipartFile file) throws IOException {
-        if (file.isEmpty()) {
-            throw new RuntimeException("File is empty");
+    private List<String> uploadImages(Painting painting, MultipartFile[] images) {
+        if (images.length > MAX_IMAGES) {
+            throw new RuntimeException("A maximum of " + MAX_IMAGES + " images are allowed");
         }
 
-        if (file.getSize() > MAX_FILE_SIZE) {
-            throw new RuntimeException("File size exceeds maximum allowed size of 5MB");
+        String folder = buildFolderName(painting.getId(), painting.getName());
+        List<String> urls = new ArrayList<>();
+        for (MultipartFile image : images) {
+            if (image.isEmpty()) continue;
+            validateImage(image);
+            urls.add(s3Service.upload(folder, image));
         }
-
-        // Validate file type
-        String contentType = file.getContentType();
-        if (!isValidImageType(contentType)) {
-            throw new RuntimeException("Invalid file type. Only JPG, PNG, WEBP, GIF are allowed");
-        }
-
-        // Create upload directory if it doesn't exist
-        Path uploadPath = Paths.get(UPLOAD_DIR);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-
-        // Generate unique filename
-        String fileName = UUID.randomUUID() + getFileExtension(file.getOriginalFilename());
-        Path filePath = uploadPath.resolve(fileName);
-
-        // Save file
-        Files.copy(file.getInputStream(), filePath);
-
-        return "/uploads/paintings/" + fileName;
+        return urls;
     }
 
     /**
-     * Delete painting image
+     * Build the per-painting S3 folder name: first 5 chars of the id + sanitized name.
      */
-    public void deletePaintingImage(String imageUrl) {
-        try {
-            if (imageUrl != null && !imageUrl.isEmpty()) {
-                String fileName = imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
-                Path filePath = Paths.get(UPLOAD_DIR, fileName);
-                if (Files.exists(filePath)) {
-                    Files.delete(filePath);
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+    private String buildFolderName(UUID id, String name) {
+        String idPrefix = id.toString().substring(0, 5);
+        String sanitizedName = name.replaceAll("[^a-zA-Z0-9]+", "_");
+        return idPrefix + "-" + sanitizedName;
+    }
+
+    private void validateImage(MultipartFile file) {
+        if (file.getSize() > MAX_FILE_SIZE) {
+            throw new RuntimeException("File size exceeds maximum allowed size of " + (MAX_FILE_SIZE / (1024 * 1024)) + "MB");
+        }
+        if (!isValidImageType(file.getContentType())) {
+            throw new RuntimeException("Invalid file type. Only JPG, PNG, WEBP, GIF are allowed");
         }
     }
 
@@ -147,13 +149,6 @@ public class PaintingService {
      */
     public List<Painting> getPaintingsByTechnique(String technique) {
         return paintingRepository.findByTechnique(technique);
-    }
-
-    /**
-     * Get paintings with original available
-     */
-    public List<Painting> getPaintingsWithOriginalAvailable() {
-        return paintingRepository.findByOriginalAvailableTrue();
     }
 
     /**
@@ -174,15 +169,5 @@ public class PaintingService {
                         contentType.equals("image/webp") ||
                         contentType.equals("image/gif")
         );
-    }
-
-    /**
-     * Get file extension
-     */
-    private String getFileExtension(String fileName) {
-        if (fileName != null && fileName.lastIndexOf(".") > 0) {
-            return fileName.substring(fileName.lastIndexOf("."));
-        }
-        return ".jpg";
     }
 }

@@ -30,11 +30,6 @@ public interface PaintingRepository extends JpaRepository<Painting, UUID> {
     List<Painting> findAllByOrderByCreatedAtDesc();
 
     /**
-     * Find paintings with original available
-     */
-    List<Painting> findByOriginalAvailableTrue();
-
-    /**
      * Search paintings by name
      */
     @Query("SELECT p FROM Painting p WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")

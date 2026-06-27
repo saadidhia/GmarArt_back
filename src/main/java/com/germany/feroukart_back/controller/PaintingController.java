@@ -76,10 +76,13 @@ public class PaintingController {
             @RequestParam String name,
             @RequestParam String technique,
             @RequestParam(required = false) Integer year,
-            @RequestParam String printSize,
-            @RequestParam Double printPrice,
-            @RequestParam(required = false) boolean originalAvailable,
-            @RequestParam(required = false) Double originalPrice,
+            @RequestParam(required = false) String style,
+            @RequestParam String artist,
+            @RequestParam Double width,
+            @RequestParam Double height,
+            @RequestParam(required = false) Double depth,
+            @RequestParam Double price,
+            @RequestParam(required = false) String description,
             @RequestParam(required = false) MultipartFile[] images) {
         try {
             log.info("Uploading painting: {}", name);
@@ -89,25 +92,16 @@ public class PaintingController {
             painting.setName(name);
             painting.setTechnique(technique);
             painting.setYear(year);
-            painting.setPrintSize(printSize);
-            painting.setPrintPrice(printPrice);
-            painting.setOriginalAvailable(originalAvailable);
-            painting.setOriginalPrice(originalPrice);
+            painting.setStyle(style);
+            painting.setArtist(artist);
+            painting.setWidth(width);
+            painting.setHeight(height);
+            painting.setDepth(depth);
+            painting.setPrice(price);
+            painting.setDescription(description);
 
-            // Handle image uploads
-            if (images != null && images.length > 0) {
-                java.util.List<String> imageUrls = new java.util.ArrayList<>();
-                for (MultipartFile image : images) {
-                    if (!image.isEmpty()) {
-                        String imageUrl = paintingService.savePaintingImage(image);
-                        imageUrls.add(imageUrl);
-                    }
-                }
-                painting.setAllImageUrls(imageUrls);
-            }
-
-            // Save painting
-            Painting savedPainting = paintingService.createPainting(painting);
+            // Save painting and upload its images to S3
+            Painting savedPainting = paintingService.createPainting(painting, images);
 
             log.info("Painting uploaded successfully: {}", savedPainting.getId());
 
@@ -129,10 +123,13 @@ public class PaintingController {
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String technique,
             @RequestParam(required = false) Integer year,
-            @RequestParam(required = false) String printSize,
-            @RequestParam(required = false) Double printPrice,
-            @RequestParam(required = false) Boolean originalAvailable,
-            @RequestParam(required = false) Double originalPrice,
+            @RequestParam(required = false) String style,
+            @RequestParam(required = false) String artist,
+            @RequestParam(required = false) Double width,
+            @RequestParam(required = false) Double height,
+            @RequestParam(required = false) Double depth,
+            @RequestParam(required = false) Double price,
+            @RequestParam(required = false) String description,
             @RequestParam(required = false) MultipartFile[] images) {
         try {
             Painting painting = paintingService.getPaintingById(id)
@@ -141,24 +138,15 @@ public class PaintingController {
             if (name != null) painting.setName(name);
             if (technique != null) painting.setTechnique(technique);
             if (year != null) painting.setYear(year);
-            if (printSize != null) painting.setPrintSize(printSize);
-            if (printPrice != null) painting.setPrintPrice(printPrice);
-            if (originalAvailable != null) painting.setOriginalAvailable(originalAvailable);
-            if (originalPrice != null) painting.setOriginalPrice(originalPrice);
+            if (style != null) painting.setStyle(style);
+            if (artist != null) painting.setArtist(artist);
+            if (width != null) painting.setWidth(width);
+            if (height != null) painting.setHeight(height);
+            if (depth != null) painting.setDepth(depth);
+            if (price != null) painting.setPrice(price);
+            if (description != null) painting.setDescription(description);
 
-            // Handle new images
-            if (images != null && images.length > 0) {
-                java.util.List<String> imageUrls = new java.util.ArrayList<>();
-                for (MultipartFile image : images) {
-                    if (!image.isEmpty()) {
-                        String imageUrl = paintingService.savePaintingImage(image);
-                        imageUrls.add(imageUrl);
-                    }
-                }
-                painting.setAllImageUrls(imageUrls);
-            }
-
-            Painting updatedPainting = paintingService.updatePainting(id, painting);
+            Painting updatedPainting = paintingService.updatePainting(id, painting, images);
             return ResponseEntity.ok(updatedPainting);
 
         } catch (Exception e) {
@@ -189,20 +177,6 @@ public class PaintingController {
     public ResponseEntity<?> getPaintingsByTechnique(@PathVariable String technique) {
         try {
             List<Painting> paintings = paintingService.getPaintingsByTechnique(technique);
-            return ResponseEntity.ok(paintings);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Error fetching paintings: " + e.getMessage()));
-        }
-    }
-
-    /**
-     * Get paintings with original available
-     */
-    @GetMapping("/filter/original-available")
-    public ResponseEntity<?> getPaintingsWithOriginalAvailable() {
-        try {
-            List<Painting> paintings = paintingService.getPaintingsWithOriginalAvailable();
             return ResponseEntity.ok(paintings);
         } catch (Exception e) {
             return ResponseEntity.badRequest()

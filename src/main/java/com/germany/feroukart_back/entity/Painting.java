@@ -28,19 +28,28 @@ public class Painting {
     @Column
     private Integer year;
 
-    @Column(name = "print_size")
-    private String printSize;
+    @Column
+    private String style;
 
-    @Column(name = "print_price")
-    private Double printPrice;
+    @Column
+    private String artist;
 
-    @Column(name = "original_available")
-    private boolean originalAvailable = true;
+    @Column
+    private Double width;
 
-    @Column(name = "original_price")
-    private Double originalPrice;
+    @Column(name = "height")
+    private Double height;
 
-    // Multiple image URLs (up to 5)
+    @Column
+    private Double depth;
+
+    @Column(name = "price")
+    private Double price;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    // Multiple image URLs (up to 7)
     @Column(name = "image_url_1")
     private String imageUrl1;
 
@@ -55,6 +64,12 @@ public class Painting {
 
     @Column(name = "image_url_5")
     private String imageUrl5;
+
+    @Column(name = "image_url_6")
+    private String imageUrl6;
+
+    @Column(name = "image_url_7")
+    private String imageUrl7;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -83,6 +98,8 @@ public class Painting {
         if (imageUrl3 != null) urls.add(imageUrl3);
         if (imageUrl4 != null) urls.add(imageUrl4);
         if (imageUrl5 != null) urls.add(imageUrl5);
+        if (imageUrl6 != null) urls.add(imageUrl6);
+        if (imageUrl7 != null) urls.add(imageUrl7);
         return urls;
     }
 
@@ -95,5 +112,7 @@ public class Painting {
         this.imageUrl3 = urls.size() > 2 ? urls.get(2) : null;
         this.imageUrl4 = urls.size() > 3 ? urls.get(3) : null;
         this.imageUrl5 = urls.size() > 4 ? urls.get(4) : null;
+        this.imageUrl6 = urls.size() > 5 ? urls.get(5) : null;
+        this.imageUrl7 = urls.size() > 6 ? urls.get(6) : null;
     }
 }

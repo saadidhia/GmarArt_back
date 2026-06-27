@@ -1,0 +1,11 @@
+ALTER TABLE paintings RENAME COLUMN print_price TO price;
+ALTER TABLE paintings DROP COLUMN print_size;
+
+ALTER TABLE paintings ADD COLUMN style VARCHAR(100);
+ALTER TABLE paintings ADD COLUMN artist VARCHAR(255);
+ALTER TABLE paintings ADD COLUMN width DECIMAL(10,2);
+ALTER TABLE paintings ADD COLUMN height DECIMAL(10,2);
+ALTER TABLE paintings ADD COLUMN depth DECIMAL(10,2);
+
+ALTER TABLE paintings ADD COLUMN image_url_6 VARCHAR(500);
+ALTER TABLE paintings ADD COLUMN image_url_7 VARCHAR(500);
