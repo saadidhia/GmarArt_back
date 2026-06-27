@@ -61,8 +61,8 @@ jobs:
             fi
             # Restart systemd service
             systemctl daemon-reload
-            systemctl restart feroukart-back
-            systemctl status feroukart-back --no-pager -l
+            systemctl restart feroukArt
+            systemctl status feroukArt --no-pager -l
           EOF
 
           echo "✅ FeroukArt backend deployment finished successfully!"
