@@ -34,7 +34,7 @@ jobs:
         run: mvn package -DskipTests
 
       - name: Run Tests
-        run: mvn test
+        run: mvn test -Dspring.profiles.active=test
 
       - name: Start ssh-agent
         if: github.ref == 'refs/heads/prod'
