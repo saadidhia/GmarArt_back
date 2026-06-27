@@ -5,7 +5,7 @@ spring:
   application:
     name: feroukArt_back
   profiles:
-    active: dev
+    active: prod
   servlet:
     multipart:
       enabled: true
