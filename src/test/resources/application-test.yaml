@@ -26,3 +26,8 @@ aws:
     secret-key: test
   s3:
     bucket-name: test-bucket
+
+paypal:
+  client-id: ${PAYPAL_CLIENT_ID}
+  client-secret: ${PAYPAL_CLIENT_SECRET}
+  base-url: https://api-m.paypal.com
