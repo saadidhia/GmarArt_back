@@ -28,6 +28,6 @@ aws:
     bucket-name: test-bucket
 
 paypal:
-  client-id: ${PAYPAL_CLIENT_ID}
-  client-secret: ${PAYPAL_CLIENT_SECRET}
+  client-id: xx
+  client-secret: xx
   base-url: https://api-m.paypal.com
