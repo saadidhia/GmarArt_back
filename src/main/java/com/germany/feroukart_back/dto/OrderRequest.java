@@ -13,7 +13,11 @@ import java.util.UUID;
 public class OrderRequest {
     private String buyerName;
     private String buyerEmail;
-    private String shippingAddress;
+    private String shippingStreet;
+    private String shippingHouseNumber;
+    private String shippingPostalCode;
+    private String shippingRegion;
+    private String shippingCountry;
     private List<Item> items;
 
     @Data
@@ -22,7 +26,10 @@ public class OrderRequest {
     public static class Item {
         private UUID paintingId;
         private String paintingName;
+        private UUID printId;
+        private String printName;
         private String imageUrl;
         private Double price;
+        private Integer quantity;
     }
 }

@@ -24,15 +24,27 @@ public class OrderItem {
     @JsonIgnore
     private Order order;
 
-    @Column(name = "painting_id", nullable = false)
+    @Column(name = "item_type", nullable = false)
+    private String itemType;
+
+    @Column(name = "painting_id")
     private UUID paintingId;
 
-    @Column(name = "painting_name", nullable = false)
+    @Column(name = "painting_name")
     private String paintingName;
+
+    @Column(name = "print_id")
+    private UUID printId;
+
+    @Column(name = "print_name")
+    private String printName;
 
     @Column(name = "image_url")
     private String imageUrl;
 
     @Column(nullable = false)
     private Double price;
+
+    @Column(nullable = false)
+    private Integer quantity = 1;
 }

@@ -1,0 +1,5 @@
+ALTER TABLE order_items ALTER COLUMN painting_id DROP NOT NULL;
+ALTER TABLE order_items ALTER COLUMN painting_name DROP NOT NULL;
+ALTER TABLE order_items ADD COLUMN print_id UUID;
+ALTER TABLE order_items ADD COLUMN print_name VARCHAR(255);
+ALTER TABLE order_items ADD COLUMN item_type VARCHAR(20) NOT NULL DEFAULT 'PAINTING';

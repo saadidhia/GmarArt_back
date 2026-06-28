@@ -26,3 +26,8 @@ aws:
     secret-key: ${AWS_SECRET_ACCESS_KEY}
   s3:
     bucket-name: flashmenu
+
+paypal:
+  client-id: ${PAYPAL_CLIENT_ID}
+  client-secret: ${PAYPAL_CLIENT_SECRET}
+  base-url: https://api-m.paypal.com
