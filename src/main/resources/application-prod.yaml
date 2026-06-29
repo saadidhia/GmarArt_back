@@ -25,7 +25,7 @@ aws:
     access-key: ${AWS_ACCESS_KEY_ID}
     secret-key: ${AWS_SECRET_ACCESS_KEY}
   s3:
-    bucket-name: flashmenu
+    bucket-name: ${BUCKET_NAME}
 
 paypal:
   client-id: ${PAYPAL_CLIENT_ID}
