@@ -132,7 +132,7 @@ public class PaintingService {
     private String buildFolderName(UUID id, String name) {
         String idPrefix = id.toString().substring(0, 5);
         String sanitizedName = name.replaceAll("[^a-zA-Z0-9]+", "_");
-        return idPrefix + "-" + sanitizedName;
+        return "paintings/" + idPrefix + "-" + sanitizedName;
     }
 
     private void validateImage(MultipartFile file) {
